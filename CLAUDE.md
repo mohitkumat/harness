@@ -71,6 +71,9 @@ agent-harness/
 └── docs/adr/            # Architecture Decision Records
 ```
 
+Import names: `packages/<name>` is the `harness.<name>` namespace package (e.g. `harness.core`);
+the eval runner is `harness_evals`. See `docs/adr/0001-monorepo-layout-and-tooling.md`.
+
 ### Dependency rules (enforced by `just lint-deps` in CI)
 - `core` imports nothing from this repo.
 - `adapters`, `tools`, `context`, `memory`, `sandbox`, `guardrails`, `observability` → may import `core` only.
@@ -100,7 +103,7 @@ If you change `protocol/`, run `just gen` and commit the generated files.
 
 ## 5. Current phase
 
-> **Current phase: 0 — Foundations.** Update this line when a phase's exit criteria are met.
+> **Current phase: 1 — MVP loop + CLI.** (Phase 0 exit criteria met 2026-09-30.) Update this line when a phase's exit criteria are met.
 
 Do not build features from later phases early. If a later-phase need appears, leave a
 `# TODO(phase-N):` comment and open an issue instead.
@@ -167,7 +170,7 @@ cost/latency win.
   are fine for internal structs.
 - Async-first (`asyncio`) for I/O: model calls, tools, storage. No blocking calls in the loop;
   wrap unavoidable sync code with `asyncio.to_thread`.
-- Errors: raise typed exceptions from `core.errors` (`ModelError`, `ToolError`, `LimitExceeded`,
+- Errors: raise typed exceptions from `harness.core.errors` (`ModelError`, `ToolError`, `LimitExceeded`,
   `PermissionDenied`). Never swallow exceptions silently.
 - Config via `pydantic-settings` + env vars. Secrets never in code, logs or events.
 - Public functions and classes get docstrings stating purpose, not restating the signature.
@@ -191,7 +194,7 @@ cost/latency win.
 - Translate **both directions**: canonical → provider request, provider response → canonical.
 - Handle provider quirks inside the adapter (role alternation, tool-result formats, JSON-string
   arguments, stop reasons, usage fields).
-- Map provider errors to `core.errors` types; mark retryable ones (429, 5xx, timeouts).
+- Map provider errors to `harness.core.errors` types; mark retryable ones (429, 5xx, timeouts).
 - Must pass the shared contract suite in `packages/adapters/tests/contract/`.
 
 **Checklist — adding a new provider:**
