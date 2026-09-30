@@ -1,0 +1,14 @@
+id = "find-todo-owner"
+title = "Search several files for a marker"
+tags = ["list_dir", "read_file"]
+prompt = "One file in this project has a TODO comment assigned to 'priya'. Which file is it? Give its path."
+
+[setup.files]
+"app/api.py" = "def get():\n    # TODO(sam): paginate\n    return []\n"
+"app/db.py" = "def connect():\n    # TODO(priya): add retries\n    ...\n"
+"app/cli.py" = "def main():\n    pass\n"
+"docs/notes.md" = "Ask priya about the roadmap.\n"
+
+[[checks]]
+type = "answer_contains"
+text = "app/db.py"

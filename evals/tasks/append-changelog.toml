@@ -1,0 +1,30 @@
+id = "append-changelog"
+title = "Append an entry to a changelog"
+tags = ["read_file", "write_file"]
+prompt = "Add a line '- Added dark mode' under the '## Unreleased' heading in CHANGELOG.md, keeping existing entries."
+
+[setup.files]
+"CHANGELOG.md" = """
+# Changelog
+
+## Unreleased
+- Fixed login redirect
+
+## 1.0.0
+- Initial release
+"""
+
+[[checks]]
+type = "file_contains"
+path = "CHANGELOG.md"
+text = "- Added dark mode"
+
+[[checks]]
+type = "file_contains"
+path = "CHANGELOG.md"
+text = "- Fixed login redirect"
+
+[[checks]]
+type = "file_contains"
+path = "CHANGELOG.md"
+text = "## 1.0.0\n- Initial release"

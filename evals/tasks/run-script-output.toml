@@ -1,0 +1,15 @@
+id = "run-script-output"
+title = "Run a script and report its output"
+tags = ["run_shell"]
+prompt = "Run compute.py with python and tell me the number it prints."
+
+[setup.files]
+"compute.py" = "print(sum(i * i for i in range(1, 21)))\n"
+
+[[checks]]
+type = "answer_contains"
+text = "2870"
+
+[[checks]]
+type = "file_unchanged"
+path = "compute.py"

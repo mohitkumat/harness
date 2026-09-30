@@ -1,0 +1,16 @@
+id = "count-python-files"
+title = "Count files of a type in a directory"
+tags = ["fast", "list_dir"]
+prompt = "How many .py files are directly inside the src/ directory (not subdirectories)? Answer with the number."
+
+[setup.files]
+"src/main.py" = "print('main')\n"
+"src/util.py" = "X = 1\n"
+"src/models.py" = "class A: ...\n"
+"src/README.md" = "# src\n"
+"src/data.json" = "{}\n"
+"src/pkg/inner.py" = "Y = 2\n"
+
+[[checks]]
+type = "answer_matches"
+pattern = '\b3\b'

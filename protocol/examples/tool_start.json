@@ -1,0 +1,1 @@
+{"type": "tool_start", "session_id": "s_01", "seq": 4, "ts": "2026-09-30T10:00:01Z", "step": 1, "tool_call_id": "tc_1", "tool_name": "list_dir", "arguments": {"path": "src"}}

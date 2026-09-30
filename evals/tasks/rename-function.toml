@@ -1,0 +1,37 @@
+id = "rename-function"
+title = "Rename a function across two files"
+tags = ["read_file", "write_file", "multi-file"]
+prompt = "Rename the function calc_total to compute_total everywhere in this project (definition and call sites)."
+
+[setup.files]
+"billing.py" = """
+def calc_total(items):
+    return sum(i["price"] for i in items)
+"""
+"checkout.py" = """
+from billing import calc_total
+
+
+def checkout(cart):
+    return calc_total(cart)
+"""
+
+[[checks]]
+type = "file_not_contains"
+path = "billing.py"
+text = "calc_total"
+
+[[checks]]
+type = "file_not_contains"
+path = "checkout.py"
+text = "calc_total"
+
+[[checks]]
+type = "file_contains"
+path = "billing.py"
+text = "def compute_total(items):"
+
+[[checks]]
+type = "file_contains"
+path = "checkout.py"
+text = "from billing import compute_total"

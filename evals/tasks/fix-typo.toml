@@ -1,0 +1,24 @@
+id = "fix-typo"
+title = "Fix a spelling mistake in place"
+tags = ["fast", "read_file", "write_file"]
+prompt = "README.md misspells 'receive' in several places. Fix every occurrence without changing anything else."
+
+[setup.files]
+"README.md" = """
+# Mailer
+
+Users recieve a confirmation email.
+Admins recieve a daily digest.
+You can also recieve webhooks.
+"""
+
+[[checks]]
+type = "file_equals"
+path = "README.md"
+text = """
+# Mailer
+
+Users receive a confirmation email.
+Admins receive a daily digest.
+You can also receive webhooks.
+"""

@@ -1,0 +1,14 @@
+id = "create-json-config"
+title = "Write structured JSON"
+tags = ["write_file"]
+prompt = """
+Create settings.json containing a JSON object with:
+- "theme" set to "dark"
+- "font_size" set to the integer 14
+- "plugins" set to a list with "git" and "lint" in that order
+"""
+
+[[checks]]
+type = "file_json_equals"
+path = "settings.json"
+value = { theme = "dark", font_size = 14, plugins = ["git", "lint"] }

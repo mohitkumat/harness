@@ -1,0 +1,1 @@
+{"type": "tool_end", "session_id": "s_01", "seq": 5, "ts": "2026-09-30T10:00:01Z", "step": 1, "tool_call_id": "tc_1", "tool_name": "list_dir", "is_error": false, "output": "main.py\nutil.py", "truncated": false, "duration_ms": 12}
