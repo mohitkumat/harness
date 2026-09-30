@@ -1,0 +1,17 @@
+id = "json-version"
+title = "Extract a field from JSON"
+tags = ["fast", "read_file"]
+prompt = "What version is declared in package.json?"
+
+[setup.files]
+"package.json" = """
+{
+  "name": "widget",
+  "version": "4.12.0-beta.3",
+  "dependencies": {"left-pad": "1.3.0"}
+}
+"""
+
+[[checks]]
+type = "answer_contains"
+text = "4.12.0-beta.3"

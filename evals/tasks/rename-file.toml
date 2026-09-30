@@ -1,0 +1,16 @@
+id = "rename-file"
+title = "Rename a file"
+tags = ["run_shell"]
+prompt = "Rename notes_old.md to notes.md. Its content must stay the same."
+
+[setup.files]
+"notes_old.md" = "# Notes\n\nKeep this.\n"
+
+[[checks]]
+type = "file_absent"
+path = "notes_old.md"
+
+[[checks]]
+type = "file_equals"
+path = "notes.md"
+text = "# Notes\n\nKeep this.\n"

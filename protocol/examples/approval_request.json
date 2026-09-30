@@ -1,0 +1,1 @@
+{"type": "approval_request", "session_id": "s_01", "seq": 6, "ts": "2026-09-30T10:00:02Z", "step": 2, "approval_id": "a_1", "tool_call_id": "tc_2", "tool_name": "run_shell", "arguments": {"command": "rm -rf build"}, "reason": "run_shell is risky"}

@@ -1,0 +1,21 @@
+id = "merge-files"
+title = "Concatenate two files into a new one"
+tags = ["read_file", "write_file"]
+prompt = "Create all.txt containing the contents of part1.txt followed by the contents of part2.txt."
+
+[setup.files]
+"part1.txt" = "alpha\nbeta\n"
+"part2.txt" = "gamma\ndelta\n"
+
+[[checks]]
+type = "file_equals"
+path = "all.txt"
+text = "alpha\nbeta\ngamma\ndelta\n"
+
+[[checks]]
+type = "file_unchanged"
+path = "part1.txt"
+
+[[checks]]
+type = "file_unchanged"
+path = "part2.txt"

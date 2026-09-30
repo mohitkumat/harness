@@ -1,0 +1,1 @@
+{"type": "done", "session_id": "s_01", "seq": 9, "ts": "2026-09-30T10:00:05Z", "reason": "completed", "steps": 3, "final_text": "src/ has 2 files.", "usage": {"input_tokens": 1200, "output_tokens": 85, "cache_read_tokens": 900, "cost_usd": 0.0041}}

@@ -1,0 +1,20 @@
+id = "read-config-value"
+title = "Read a value from a config file"
+tags = ["fast", "read_file"]
+prompt = "What port is the server configured to listen on? The config is in config/server.ini."
+
+[setup.files]
+"config/server.ini" = """
+[server]
+host = 0.0.0.0
+port = 8743
+workers = 4
+"""
+
+[[checks]]
+type = "answer_contains"
+text = "8743"
+
+[[checks]]
+type = "file_unchanged"
+path = "config/server.ini"

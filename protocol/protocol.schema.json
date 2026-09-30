@@ -1,0 +1,368 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness.dev/protocol/v1/protocol.schema.json",
+  "title": "ProtocolMessage",
+  "description": "Agent harness wire protocol v1. Clients send Commands and receive a stream of Events. Compatibility rule: only add optional fields; renames/removals require a version bump + ADR. Receivers must ignore unknown fields.",
+  "oneOf": [{ "$ref": "#/$defs/Command" }, { "$ref": "#/$defs/Event" }],
+  "$defs": {
+    "Usage": {
+      "title": "Usage",
+      "description": "Token usage and cost accumulated for a model call or a whole run.",
+      "type": "object",
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "cache_read_tokens": { "type": "integer", "minimum": 0, "default": 0 },
+        "cache_write_tokens": { "type": "integer", "minimum": 0, "default": 0 },
+        "cost_usd": { "type": ["number", "null"], "minimum": 0, "default": null }
+      },
+      "required": ["input_tokens", "output_tokens"]
+    },
+
+    "Command": {
+      "title": "Command",
+      "description": "Any client -> harness command.",
+      "oneOf": [
+        { "$ref": "#/$defs/CreateSessionCommand" },
+        { "$ref": "#/$defs/SendCommand" },
+        { "$ref": "#/$defs/ApproveCommand" },
+        { "$ref": "#/$defs/CancelCommand" },
+        { "$ref": "#/$defs/ResumeCommand" }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "create_session": "#/$defs/CreateSessionCommand",
+          "send": "#/$defs/SendCommand",
+          "approve": "#/$defs/ApproveCommand",
+          "cancel": "#/$defs/CancelCommand",
+          "resume": "#/$defs/ResumeCommand"
+        }
+      }
+    },
+    "CreateSessionCommand": {
+      "title": "CreateSessionCommand",
+      "description": "Start a new session. The harness answers with a StatusUpdate carrying the new session_id.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "create_session" },
+        "command_id": {
+          "type": "string",
+          "description": "Client-chosen id echoed in related events."
+        },
+        "model": {
+          "type": ["string", "null"],
+          "description": "Model alias from harness config; null = default.",
+          "default": null
+        },
+        "system_prompt": { "type": ["string", "null"], "default": null },
+        "workspace": {
+          "type": ["string", "null"],
+          "description": "Workspace root the session's tools operate on.",
+          "default": null
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "default": {}
+        }
+      },
+      "required": ["type", "command_id"]
+    },
+    "SendCommand": {
+      "title": "SendCommand",
+      "description": "Send a user message to a session, starting (or continuing) a run.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "send" },
+        "command_id": { "type": "string" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "text": { "type": "string", "minLength": 1 }
+      },
+      "required": ["type", "command_id", "session_id", "text"]
+    },
+    "ApproveCommand": {
+      "title": "ApproveCommand",
+      "description": "Answer a pending ApprovalRequest.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "approve" },
+        "command_id": { "type": "string" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "approval_id": { "type": "string" },
+        "decision": { "type": "string", "enum": ["approve", "deny"] },
+        "reason": { "type": ["string", "null"], "default": null }
+      },
+      "required": ["type", "command_id", "session_id", "approval_id", "decision"]
+    },
+    "CancelCommand": {
+      "title": "CancelCommand",
+      "description": "Cancel the active run in a session. The run ends with Done(reason=cancelled).",
+      "type": "object",
+      "properties": {
+        "type": { "const": "cancel" },
+        "command_id": { "type": "string" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "reason": { "type": ["string", "null"], "default": null }
+      },
+      "required": ["type", "command_id", "session_id"]
+    },
+    "ResumeCommand": {
+      "title": "ResumeCommand",
+      "description": "Reattach to a session and replay events with seq > after_seq.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "resume" },
+        "command_id": { "type": "string" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "after_seq": {
+          "type": "integer",
+          "minimum": -1,
+          "default": -1,
+          "description": "Last seq the client has seen; -1 replays everything."
+        }
+      },
+      "required": ["type", "command_id", "session_id"]
+    },
+
+    "Event": {
+      "title": "Event",
+      "description": "Any harness -> client event. Every event carries session_id, a per-session monotonically increasing seq, and a timestamp.",
+      "oneOf": [
+        { "$ref": "#/$defs/TextDelta" },
+        { "$ref": "#/$defs/ToolStart" },
+        { "$ref": "#/$defs/ToolEnd" },
+        { "$ref": "#/$defs/ApprovalRequest" },
+        { "$ref": "#/$defs/StatusUpdate" },
+        { "$ref": "#/$defs/Done" },
+        { "$ref": "#/$defs/Error" }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "text_delta": "#/$defs/TextDelta",
+          "tool_start": "#/$defs/ToolStart",
+          "tool_end": "#/$defs/ToolEnd",
+          "approval_request": "#/$defs/ApprovalRequest",
+          "status_update": "#/$defs/StatusUpdate",
+          "done": "#/$defs/Done",
+          "error": "#/$defs/Error"
+        }
+      }
+    },
+    "TextDelta": {
+      "title": "TextDelta",
+      "description": "A chunk of assistant text.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "text_delta" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "seq": { "type": "integer", "minimum": 0 },
+        "ts": { "type": "string", "format": "date-time" },
+        "step": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string" }
+      },
+      "required": ["type", "session_id", "seq", "ts", "step", "text"]
+    },
+    "ToolStart": {
+      "title": "ToolStart",
+      "description": "A tool call is about to execute (after any approval).",
+      "type": "object",
+      "properties": {
+        "type": { "const": "tool_start" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "seq": { "type": "integer", "minimum": 0 },
+        "ts": { "type": "string", "format": "date-time" },
+        "step": { "type": "integer", "minimum": 0 },
+        "tool_call_id": { "type": "string" },
+        "tool_name": { "type": "string" },
+        "arguments": { "type": "object", "additionalProperties": true }
+      },
+      "required": [
+        "type",
+        "session_id",
+        "seq",
+        "ts",
+        "step",
+        "tool_call_id",
+        "tool_name",
+        "arguments"
+      ]
+    },
+    "ToolEnd": {
+      "title": "ToolEnd",
+      "description": "A tool call finished. output is the (possibly truncated) text returned to the model.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "tool_end" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "seq": { "type": "integer", "minimum": 0 },
+        "ts": { "type": "string", "format": "date-time" },
+        "step": { "type": "integer", "minimum": 0 },
+        "tool_call_id": { "type": "string" },
+        "tool_name": { "type": "string" },
+        "is_error": { "type": "boolean", "default": false },
+        "output": { "type": "string" },
+        "truncated": { "type": "boolean", "default": false },
+        "duration_ms": { "type": "integer", "minimum": 0 }
+      },
+      "required": [
+        "type",
+        "session_id",
+        "seq",
+        "ts",
+        "step",
+        "tool_call_id",
+        "tool_name",
+        "output",
+        "duration_ms"
+      ]
+    },
+    "ApprovalRequest": {
+      "title": "ApprovalRequest",
+      "description": "A risky tool call is waiting for the client to send an ApproveCommand.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "approval_request" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "seq": { "type": "integer", "minimum": 0 },
+        "ts": { "type": "string", "format": "date-time" },
+        "step": { "type": "integer", "minimum": 0 },
+        "approval_id": { "type": "string" },
+        "tool_call_id": { "type": "string" },
+        "tool_name": { "type": "string" },
+        "arguments": { "type": "object", "additionalProperties": true },
+        "reason": {
+          "type": "string",
+          "description": "Why approval is required (e.g. which policy matched)."
+        }
+      },
+      "required": [
+        "type",
+        "session_id",
+        "seq",
+        "ts",
+        "step",
+        "approval_id",
+        "tool_call_id",
+        "tool_name",
+        "arguments",
+        "reason"
+      ]
+    },
+    "StatusUpdate": {
+      "title": "StatusUpdate",
+      "description": "Session state changed.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "status_update" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "seq": { "type": "integer", "minimum": 0 },
+        "ts": { "type": "string", "format": "date-time" },
+        "status": {
+          "type": "string",
+          "enum": ["created", "idle", "thinking", "running_tool", "awaiting_approval", "compacting"]
+        },
+        "step": { "type": ["integer", "null"], "minimum": 0, "default": null },
+        "command_id": {
+          "type": ["string", "null"],
+          "description": "Command that caused this change, if any.",
+          "default": null
+        },
+        "message": { "type": ["string", "null"], "default": null }
+      },
+      "required": ["type", "session_id", "seq", "ts", "status"]
+    },
+    "Done": {
+      "title": "Done",
+      "description": "A run ended. The session stays open for further SendCommands.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "done" },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque, server-assigned session identifier."
+        },
+        "seq": { "type": "integer", "minimum": 0 },
+        "ts": { "type": "string", "format": "date-time" },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "max_steps",
+            "max_tokens",
+            "max_cost",
+            "timeout",
+            "cancelled",
+            "error"
+          ]
+        },
+        "steps": { "type": "integer", "minimum": 0 },
+        "final_text": { "type": ["string", "null"], "default": null },
+        "usage": { "$ref": "#/$defs/Usage" }
+      },
+      "required": ["type", "session_id", "seq", "ts", "reason", "steps", "usage"]
+    },
+    "Error": {
+      "title": "Error",
+      "description": "Something went wrong. Fatal errors are followed by Done(reason=error).",
+      "type": "object",
+      "properties": {
+        "type": { "const": "error" },
+        "session_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "description": "Null when the error is not tied to a session (e.g. malformed command)."
+        },
+        "seq": { "type": "integer", "minimum": 0 },
+        "ts": { "type": "string", "format": "date-time" },
+        "code": {
+          "type": "string",
+          "description": "Stable machine-readable code, e.g. model_error, tool_error, limit_exceeded, permission_denied, invalid_command, internal."
+        },
+        "message": { "type": "string" },
+        "retryable": { "type": "boolean", "default": false },
+        "fatal": { "type": "boolean", "default": false },
+        "command_id": { "type": ["string", "null"], "default": null }
+      },
+      "required": ["type", "session_id", "seq", "ts", "code", "message"]
+    }
+  }
+}

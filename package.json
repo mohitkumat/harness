@@ -1,0 +1,17 @@
+{
+  "name": "agent-harness",
+  "private": true,
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm -r typecheck",
+    "gen": "pnpm -r gen"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14"
+  }
+}

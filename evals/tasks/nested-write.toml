@@ -1,0 +1,13 @@
+id = "nested-write"
+title = "Create a file in a new nested directory"
+tags = ["write_file"]
+prompt = "Create docs/guides/setup.md whose first line is the heading '# Setup'."
+
+[[checks]]
+type = "file_exists"
+path = "docs/guides/setup.md"
+
+[[checks]]
+type = "file_contains"
+path = "docs/guides/setup.md"
+text = "# Setup"

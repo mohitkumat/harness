@@ -1,0 +1,17 @@
+{
+  "name": "@agent-harness/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "gen": "node scripts/gen-protocol.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "^16.0.0",
+    "typescript": "^7.0.2"
+  }
+}

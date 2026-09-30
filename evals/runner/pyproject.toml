@@ -1,0 +1,22 @@
+[project]
+name = "harness-evals"
+version = "0.0.0"
+description = "Eval runner: loads tasks from evals/tasks, runs an agent against each, scores with declarative checks."
+requires-python = ">=3.12"
+dependencies = [
+    "harness-core",
+    "pydantic>=2.9",
+]
+
+[project.scripts]
+harness-eval = "harness_evals.cli:main"
+
+[tool.uv.sources]
+harness-core = { workspace = true }
+
+[tool.uv.build-backend]
+module-name = "harness_evals"
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"

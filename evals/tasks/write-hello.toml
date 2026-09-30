@@ -1,0 +1,9 @@
+id = "write-hello"
+title = "Create a file with exact content"
+tags = ["fast", "write_file"]
+prompt = "Create a file named hello.txt containing exactly the text: Hello, harness!"
+
+[[checks]]
+type = "file_equals"
+path = "hello.txt"
+text = "Hello, harness!"

@@ -1,0 +1,16 @@
+[project]
+name = "harness-sandbox"
+version = "0.0.0"
+description = "Sandboxed executors (Docker / E2B) for shell and code tools."
+requires-python = ">=3.12"
+dependencies = ["harness-core"]
+
+[tool.uv.sources]
+harness-core = { workspace = true }
+
+[tool.uv.build-backend]
+module-name = "harness.sandbox"
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"
