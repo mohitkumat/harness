@@ -7,7 +7,7 @@ session goes through ``EventBus``; subscribers render, log or trace them.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -61,19 +61,27 @@ class EventBus:
         self._sinks.append(sink)
         return lambda: self._sinks.remove(sink)
 
-    async def stream(self) -> AsyncIterator[AnyEvent]:
-        """Iterate over events as they are emitted, until the consumer stops iterating."""
+    def stream(self) -> AsyncGenerator[AnyEvent]:
+        """Subscribe now and return an iterator over every event emitted from here on.
+
+        Subscribing happens on call, not on first iteration, so no event is missed between creating
+        the iterator and starting to consume it. Close it (``contextlib.aclosing``) to unsubscribe.
+        """
         queue: asyncio.Queue[AnyEvent] = asyncio.Queue()
 
         async def put(event: AnyEvent) -> None:
             queue.put_nowait(event)
 
         unsubscribe = self.subscribe(put)
-        try:
-            while True:
-                yield await queue.get()
-        finally:
-            unsubscribe()
+
+        async def iterate() -> AsyncGenerator[AnyEvent]:
+            try:
+                while True:
+                    yield await queue.get()
+            finally:
+                unsubscribe()
+
+        return iterate()
 
     def replay(self, after_seq: int = -1) -> list[AnyEvent]:
         """Events already emitted with ``seq > after_seq``."""

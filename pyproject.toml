@@ -13,13 +13,14 @@ dependencies = [
     "harness-guardrails",
     "harness-observability",
     "harness-evals",
+    "harness-cli",
 ]
 
 [tool.uv]
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*", "evals/runner"]
+members = ["packages/*", "apps/cli", "evals/runner"]
 
 [tool.uv.sources]
 harness-core = { workspace = true }
@@ -31,6 +32,7 @@ harness-sandbox = { workspace = true }
 harness-guardrails = { workspace = true }
 harness-observability = { workspace = true }
 harness-evals = { workspace = true }
+harness-cli = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -64,7 +66,7 @@ ignore = [
 "**/tests/**" = ["D"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["harness", "harness_evals"]
+known-first-party = ["harness", "harness_evals", "harness_cli"]
 
 # ---------------------------------------------------------------- pyright
 [tool.pyright]
@@ -72,12 +74,12 @@ typeCheckingMode = "strict"
 pythonVersion = "3.12"
 venvPath = "."
 venv = ".venv"
-include = ["packages", "evals/runner"]
+include = ["packages", "apps/cli", "evals/runner"]
 exclude = ["**/node_modules", "**/.venv"]
 
 # ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
-testpaths = ["packages", "evals/runner/tests"]
+testpaths = ["packages", "apps/cli/tests", "evals/runner/tests"]
 addopts = "--import-mode=importlib -q"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -105,7 +107,7 @@ formatters = ["ruff-format"]
 
 # ---------------------------------------------------------------- dependency rules (just lint-deps)
 [tool.importlinter]
-root_packages = ["harness", "harness_evals"]
+root_packages = ["harness", "harness_evals", "harness_cli"]
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
@@ -115,6 +117,7 @@ source_modules = ["harness.core"]
 forbidden_modules = [
     "harness.adapters", "harness.tools", "harness.context", "harness.memory",
     "harness.sandbox", "harness.guardrails", "harness.observability", "harness_evals",
+    "harness_cli",
 ]
 
 [[tool.importlinter.contracts]]
@@ -132,7 +135,7 @@ source_modules = [
     "harness.core", "harness.adapters", "harness.tools", "harness.context", "harness.memory",
     "harness.sandbox", "harness.guardrails", "harness.observability",
 ]
-forbidden_modules = ["harness_evals"]
+forbidden_modules = ["harness_evals", "harness_cli"]
 
 [[tool.importlinter.contracts]]
 name = "provider SDKs only inside adapters (prime directive)"
@@ -140,6 +143,7 @@ type = "forbidden"
 source_modules = [
     "harness.core", "harness.tools", "harness.context", "harness.memory",
     "harness.sandbox", "harness.guardrails", "harness.observability", "harness_evals",
+    "harness_cli",
 ]
 # `google` rather than `google.genai`: import-linter cannot target subpackages of external packages.
 forbidden_modules = ["anthropic", "openai", "google", "ollama"]

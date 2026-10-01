@@ -59,9 +59,9 @@ eval *ARGS:
 eval-matrix:
     @echo "TODO(phase-2): eval matrix needs >=2 adapters." >&2; exit 1
 
-# Run the CLI against local core
-dev-cli:
-    @echo "TODO(phase-1): apps/cli does not exist yet." >&2; exit 1
+# Run the CLI against local core, e.g. `just dev-cli chat` or `just dev-cli run "..."`
+dev-cli *ARGS:
+    uv run harness {{ARGS}}
 
 # Run the API server with hot reload
 dev-server:
