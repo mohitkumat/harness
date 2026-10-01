@@ -68,6 +68,15 @@ async def collect_stream(
     if stop is None:
         raise ModelError("model stream ended without a stop delta", retryable=True)
 
+    if stop.message is not None:
+        return ModelResponse(
+            message=stop.message,
+            stop_reason=stop.stop_reason,
+            usage=stop.usage,
+            model=stop.model,
+            response_id=stop.response_id,
+        )
+
     content: list[ContentPart] = []
     for part in parts:
         if isinstance(part, TextPart):

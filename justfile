@@ -67,6 +67,6 @@ dev-cli:
 dev-server:
     @echo "TODO(phase-5): apps/server does not exist yet." >&2; exit 1
 
-# Re-record model cassettes for a test (uses real API keys)
+# Re-record model cassettes for a test (uses real API keys from the env or .env)
 record TEST:
-    @echo "TODO(phase-1): cassette recording arrives with the first adapter ({{TEST}})." >&2; exit 1
+    set -a; if [ -f .env ]; then . ./.env; fi; set +a; HARNESS_RECORD=1 uv run pytest {{TEST}}

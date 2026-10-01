@@ -26,7 +26,7 @@ from harness.core.protocol import (
     parse_event,
 )
 from harness.core.testing import EchoTools, Reply, RiskyAsks, ScriptedAdapter
-from harness.core.types import StopReason, Usage
+from harness.core.types import Message, ReasoningPart, StopReason, TextPart, ToolCall, Usage
 
 
 def harness_with(
@@ -212,3 +212,28 @@ async def test_collect_stream_preserves_order_and_merges_text() -> None:
 async def test_collect_stream_errors(items: list[Delta]) -> None:
     with pytest.raises(ModelError):
         await collect_stream(_deltas(*items))
+
+
+async def test_collect_stream_prefers_authoritative_message() -> None:
+    final = Message(
+        role="assistant",
+        content=[
+            ReasoningPart(source="p", data={"sig": "abc"}),
+            TextPart(text="hi"),
+            ToolCall(id="t1", name="echo", arguments={}),
+        ],
+    )
+    response = await collect_stream(
+        _deltas(
+            TextDelta(text="hi"),
+            StopDelta(stop_reason=StopReason.TOOL_USE, usage=Usage(), model="m", message=final),
+        )
+    )
+    assert response.message == final
+
+
+def test_reasoning_only_in_assistant_messages() -> None:
+    part = ReasoningPart(source="p", data={})
+    Message(role="assistant", content=[part])
+    with pytest.raises(ValueError, match="not allowed"):
+        Message(role="user", content=[part])
