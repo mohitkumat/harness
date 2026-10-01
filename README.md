@@ -16,4 +16,4 @@ just gen      # regenerate types from protocol/
 just eval     # fast eval subset
 ```
 
-Status: **Phase 0 — Foundations**.
+Status: **Phase 1 — MVP loop + CLI** (Phase 0 complete).
