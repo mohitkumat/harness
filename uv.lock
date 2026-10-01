@@ -418,13 +418,19 @@ name = "harness-evals"
 version = "0.0.0"
 source = { editable = "evals/runner" }
 dependencies = [
+    { name = "harness-cli" },
     { name = "harness-core" },
+    { name = "harness-guardrails" },
+    { name = "harness-observability" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "harness-cli", editable = "apps/cli" },
     { name = "harness-core", editable = "packages/core" },
+    { name = "harness-guardrails", editable = "packages/guardrails" },
+    { name = "harness-observability", editable = "packages/observability" },
     { name = "pydantic", specifier = ">=2.9" },
 ]
 

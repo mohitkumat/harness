@@ -5,6 +5,9 @@ description = "Eval runner: loads tasks from evals/tasks, runs an agent against 
 requires-python = ">=3.12"
 dependencies = [
     "harness-core",
+    "harness-guardrails",
+    "harness-observability",
+    "harness-cli",  # evals run exactly the agent the CLI builds
     "pydantic>=2.9",
 ]
 
@@ -13,6 +16,9 @@ harness-eval = "harness_evals.cli:main"
 
 [tool.uv.sources]
 harness-core = { workspace = true }
+harness-guardrails = { workspace = true }
+harness-observability = { workspace = true }
+harness-cli = { workspace = true }
 
 [tool.uv.build-backend]
 module-name = "harness_evals"

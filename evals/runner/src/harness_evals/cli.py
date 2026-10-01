@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from harness_evals.agents import AGENTS
+from harness_evals.agents import AGENTS, AgentOptions
 from harness_evals.runner import Report, run_suite
 from harness_evals.tasks import load_tasks
 
@@ -30,6 +30,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="harness-eval", description=__doc__)
     parser.add_argument("--tasks-dir", type=Path, default=Path("evals/tasks"))
     parser.add_argument("--agent", choices=sorted(AGENTS), default="null")
+    parser.add_argument("--model", help="Model id for the harness agent (default: HARNESS_MODEL).")
+    parser.add_argument(
+        "--allow-host-shell",
+        action="store_true",
+        help="Let the harness agent run shell commands ON THIS MACHINE without approval "
+        "(inside each task's temp workspace). Local use only; see docs/adr/0003.",
+    )
     parser.add_argument("--tag", action="append", default=[], help="Only run tasks with this tag.")
     parser.add_argument("--out-dir", type=Path, default=Path("evals/results"))
     parser.add_argument(
@@ -42,12 +49,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"no tasks found in {args.tasks_dir} (tags={args.tag})", file=sys.stderr)
         return 2
 
-    print(f"Running {len(tasks)} task(s) with agent={args.agent}\n")
-    report = asyncio.run(run_suite(AGENTS[args.agent](), tasks))
+    options = AgentOptions(
+        model=args.model, allow_host_shell=args.allow_host_shell, log_dir=args.out_dir / "sessions"
+    )
+    agent = AGENTS[args.agent](options)
+    print(f"Running {len(tasks)} task(s) with agent={agent.name}\n")
+    report = asyncio.run(run_suite(agent, tasks))
     _print_report(report)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    out = args.out_dir / f"{report.started_at.replace(':', '')}-{report.agent}.json"
+    safe_agent = report.agent.replace(":", "_").replace("/", "_")
+    out = args.out_dir / f"{report.started_at.replace(':', '')}-{safe_agent}.json"
     out.write_text(json.dumps(report.to_json_dict(), indent=2))
     print(f"report: {out}")
 
