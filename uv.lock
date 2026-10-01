@@ -386,10 +386,14 @@ version = "0.0.0"
 source = { editable = "packages/tools" }
 dependencies = [
     { name = "harness-core" },
+    { name = "jsonschema" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "harness-core", editable = "packages/core" }]
+requires-dist = [
+    { name = "harness-core", editable = "packages/core" },
+    { name = "jsonschema", specifier = ">=4.23" },
+]
 
 [[package]]
 name = "identify"
