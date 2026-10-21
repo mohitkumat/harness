@@ -5,7 +5,9 @@ against its recorded cassette ``tests/cassettes/<adapter>/<test>.json``.
 
 - Replay (default, CI): no network. A missing cassette skips the test with a hint.
 - Record: ``just record TEST=packages/adapters/tests/contract`` (sets ``HARNESS_RECORD=1``, needs
-  real credentials, e.g. ``ANTHROPIC_API_KEY`` in ``.env``).
+  real credentials, e.g. ``ANTHROPIC_API_KEY`` in ``.env``). ``openai_compat`` records against a
+  local server: ``HARNESS_CONTRACT_OPENAI_BASE_URL`` (default Ollama) and
+  ``HARNESS_CONTRACT_OPENAI_MODEL`` (default ``qwen2.5:7b``).
 """
 
 from __future__ import annotations
@@ -16,9 +18,11 @@ from pathlib import Path
 from typing import cast
 
 import anthropic
+import openai
 import pytest
 
 from harness.adapters.anthropic import AnthropicAdapter, AnthropicConfig
+from harness.adapters.openai_compat import DEFAULT_BASE_URL, OpenAICompatAdapter, OpenAICompatConfig
 from harness.adapters.testing import CassetteTransport
 from harness.core import ModelAdapter
 
@@ -37,9 +41,21 @@ def _anthropic(transport: CassetteTransport, model: str | None) -> ModelAdapter:
     )
 
 
-FACTORIES: dict[str, AdapterFactory] = {"anthropic": _anthropic}
+def _openai_compat(transport: CassetteTransport, model: str | None) -> ModelAdapter:
+    config = OpenAICompatConfig(
+        model=model or os.environ.get("HARNESS_CONTRACT_OPENAI_MODEL", "qwen2.5:7b"),
+        base_url=os.environ.get("HARNESS_CONTRACT_OPENAI_BASE_URL", DEFAULT_BASE_URL),
+        max_retries=0,
+        max_output_tokens=1_000,
+    )
+    return OpenAICompatAdapter(
+        config, http_client=openai.DefaultAsyncHttpxClient(transport=transport)
+    )
 
-# TODO(phase-2): register openai_compat and gemini factories.
+
+FACTORIES: dict[str, AdapterFactory] = {"anthropic": _anthropic, "openai_compat": _openai_compat}
+
+# TODO(phase-2): register the gemini factory.
 
 
 @pytest.fixture(params=sorted(FACTORIES))

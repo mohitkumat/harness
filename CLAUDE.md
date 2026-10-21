@@ -104,6 +104,7 @@ If you change `protocol/`, run `just gen` and commit the generated files.
 ## 5. Current phase
 
 > **Current phase: 1 — MVP loop + CLI.** (Phase 0 exit criteria met 2026-09-30.) Update this line when a phase's exit criteria are met.
+> Exception: the Phase 2 `openai_compat` adapter was brought forward for local-model development ([ADR 0005](docs/adr/0005-openai-compat-adapter-in-phase-1.md)).
 
 Do not build features from later phases early. If a later-phase need appears, leave a
 `# TODO(phase-N):` comment and open an issue instead.

@@ -7,6 +7,7 @@ from pathlib import Path
 from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from harness.adapters import Provider
 from harness.adapters.anthropic import DEFAULT_MODEL, Effort
 
 DEFAULT_SYSTEM_PROMPT = """\
@@ -27,7 +28,11 @@ class Settings(BaseSettings):
         env_prefix="HARNESS_", env_file=".env", extra="ignore", frozen=True
     )
 
+    provider: Provider = "anthropic"
     model: str = DEFAULT_MODEL
+    base_url: str | None = Field(
+        default=None, description="Model endpoint, e.g. http://localhost:11434/v1 for Ollama."
+    )
     effort: Effort | None = "high"
     max_output_tokens: int = Field(default=64_000, gt=0)
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
@@ -43,4 +48,8 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("HARNESS_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"),
         description="Read from the env or .env. Never logged or emitted in events.",
+    )
+    api_key: SecretStr | None = Field(
+        default=None,
+        description="Key for a non-Anthropic endpoint (local servers need none). Never logged.",
     )

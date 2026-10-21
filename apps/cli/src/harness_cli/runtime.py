@@ -9,7 +9,8 @@ import uuid
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from harness.adapters.anthropic import AnthropicAdapter, AnthropicConfig
+from harness.adapters import AdapterSpec
+from harness.adapters import build_adapter as build_provider_adapter
 from harness.core import (
     AgentLoop,
     ApprovalGate,
@@ -32,11 +33,13 @@ def new_command_id() -> str:
 
 def build_adapter(settings: Settings, model: str | None = None) -> ModelAdapter:
     """Build the model adapter for ``model`` (default: ``settings.model``)."""
-    # TODO(phase-2): resolve model aliases to adapters (openai_compat, gemini) from config.
-    return AnthropicAdapter(
-        AnthropicConfig(
+    return build_provider_adapter(
+        AdapterSpec(
+            provider=settings.provider,
             model=model or settings.model,
-            api_key=settings.anthropic_api_key,
+            base_url=settings.base_url,
+            api_key=settings.api_key,
+            anthropic_api_key=settings.anthropic_api_key,
             effort=settings.effort,
             max_output_tokens=settings.max_output_tokens,
         )
