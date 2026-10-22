@@ -3,7 +3,10 @@ name = "harness-adapters"
 version = "0.0.0"
 description = "Model adapters: translate canonical types to/from each provider. The ONLY place provider-specific code may live."
 requires-python = ">=3.12"
-dependencies = ["harness-core"]
+dependencies = [
+    "anthropic>=1.11.0",
+    "harness-core",
+]
 
 [tool.uv.sources]
 harness-core = { workspace = true }

@@ -1,0 +1,32 @@
+[project]
+name = "harness-cli"
+version = "0.0.0"
+description = "Command-line interface: renders the event stream, prompts for approvals."
+requires-python = ">=3.12"
+dependencies = [
+    "harness-core",
+    "harness-adapters",
+    "harness-tools",
+    "harness-guardrails",
+    "harness-observability",
+    "typer>=0.15",              # CLI framework (CLAUDE.md §3: apps/cli is Typer + Rich)
+    "rich>=13.9",               # terminal rendering of the event stream
+    "pydantic-settings>=2.6",   # config via env vars / .env (CLAUDE.md §7)
+]
+
+[project.scripts]
+harness = "harness_cli.main:app"
+
+[tool.uv.sources]
+harness-core = { workspace = true }
+harness-adapters = { workspace = true }
+harness-tools = { workspace = true }
+harness-guardrails = { workspace = true }
+harness-observability = { workspace = true }
+
+[tool.uv.build-backend]
+module-name = "harness_cli"
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"

@@ -66,3 +66,9 @@ class PermissionDenied(HarnessError):
     """A guardrail policy or the user refused an action."""
 
     code: ClassVar[str] = "permission_denied"
+
+
+class InvalidCommand(HarnessError):
+    """A client command is malformed or does not apply (unknown session, no pending approval, ...)."""
+
+    code: ClassVar[str] = "invalid_command"

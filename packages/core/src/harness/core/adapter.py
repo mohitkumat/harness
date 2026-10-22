@@ -11,7 +11,14 @@ from typing import Annotated, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from harness.core.types import ModelCapabilities, ModelRequest, ModelResponse, StopReason, Usage
+from harness.core.types import (
+    Message,
+    ModelCapabilities,
+    ModelRequest,
+    ModelResponse,
+    StopReason,
+    Usage,
+)
 
 
 class _Delta(BaseModel):
@@ -43,13 +50,19 @@ class ToolCallArgsDelta(_Delta):
 
 
 class StopDelta(_Delta):
-    """The final delta of every stream."""
+    """The final delta of every stream.
+
+    If ``message`` is set, it is the authoritative assistant message and consumers use it instead
+    of reassembling the earlier deltas. That lets an adapter stream text live but build structural
+    content (reasoning, tool calls) from the provider's final response.
+    """
 
     type: Literal["stop"] = "stop"
     stop_reason: StopReason
     usage: Usage
     model: str
     response_id: str | None = None
+    message: Message | None = None
 
 
 Delta = Annotated[

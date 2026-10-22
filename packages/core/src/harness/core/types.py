@@ -40,6 +40,20 @@ class ImagePart(_Model):
         return self
 
 
+class ReasoningPart(_Model):
+    """Model reasoning that must be replayed to the model that produced it, byte for byte.
+
+    ``data`` is opaque: only the adapter named by ``source`` interprets it (e.g. signed thinking
+    blocks or encrypted reasoning items). Other adapters drop parts whose ``source`` they don't own.
+    ``text`` is a human-readable summary, possibly empty; it is never sent back to a model.
+    """
+
+    type: Literal["reasoning"] = "reasoning"
+    source: str
+    data: dict[str, JsonValue]
+    text: str = ""
+
+
 class ToolCall(_Model):
     """A model's request to invoke a tool. ``arguments`` is always a parsed object, never a JSON string."""
 
@@ -58,13 +72,15 @@ class ToolResult(_Model):
     is_error: bool = False
 
 
-ContentPart = Annotated[TextPart | ImagePart | ToolCall | ToolResult, Field(discriminator="type")]
+ContentPart = Annotated[
+    TextPart | ImagePart | ReasoningPart | ToolCall | ToolResult, Field(discriminator="type")
+]
 
 Role = Literal["user", "assistant", "tool"]
 
 _ALLOWED_PARTS: dict[Role, tuple[type[_Model], ...]] = {
     "user": (TextPart, ImagePart),
-    "assistant": (TextPart, ToolCall),
+    "assistant": (TextPart, ReasoningPart, ToolCall),
     "tool": (ToolResult,),
 }
 

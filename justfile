@@ -59,14 +59,14 @@ eval *ARGS:
 eval-matrix:
     @echo "TODO(phase-2): eval matrix needs >=2 adapters." >&2; exit 1
 
-# Run the CLI against local core
-dev-cli:
-    @echo "TODO(phase-1): apps/cli does not exist yet." >&2; exit 1
+# Run the CLI against local core, e.g. `just dev-cli chat` or `just dev-cli run "..."`
+dev-cli *ARGS:
+    uv run harness {{ARGS}}
 
 # Run the API server with hot reload
 dev-server:
     @echo "TODO(phase-5): apps/server does not exist yet." >&2; exit 1
 
-# Re-record model cassettes for a test (uses real API keys)
+# Re-record model cassettes for a test (uses real API keys from the env or .env)
 record TEST:
-    @echo "TODO(phase-1): cassette recording arrives with the first adapter ({{TEST}})." >&2; exit 1
+    set -a; if [ -f .env ]; then . ./.env; fi; set +a; HARNESS_RECORD=1 uv run pytest {{TEST}}

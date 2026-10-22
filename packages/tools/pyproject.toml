@@ -3,7 +3,10 @@ name = "harness-tools"
 version = "0.0.0"
 description = "Tool registry, built-in tools and MCP client."
 requires-python = ">=3.12"
-dependencies = ["harness-core"]
+dependencies = [
+    "harness-core",
+    "jsonschema>=4.23",  # validates tool arguments against each tool's JSON schema
+]
 
 [tool.uv.sources]
 harness-core = { workspace = true }
