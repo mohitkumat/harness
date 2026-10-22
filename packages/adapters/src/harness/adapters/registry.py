@@ -35,27 +35,29 @@ class AdapterSpec(BaseModel):
     )
     max_output_tokens: int = Field(default=64_000, gt=0)
     effort: Effort | None = Field(default=None, description="Anthropic only.")
+    idle_timeout_s: float | None = Field(
+        default=None, gt=0, description="Max silence on a model stream; None = adapter default."
+    )
 
 
 def build_adapter(spec: AdapterSpec) -> ModelAdapter:
     """Build the adapter for ``spec.provider``."""
+    idle = {"idle_timeout_s": spec.idle_timeout_s} if spec.idle_timeout_s is not None else {}
     match spec.provider:
         case "anthropic":
-            return AnthropicAdapter(
-                AnthropicConfig(
-                    model=spec.model,
-                    api_key=spec.api_key or spec.anthropic_api_key,
-                    base_url=spec.base_url,
-                    effort=spec.effort,
-                    max_output_tokens=spec.max_output_tokens,
-                )
+            config = AnthropicConfig(
+                model=spec.model,
+                api_key=spec.api_key or spec.anthropic_api_key,
+                base_url=spec.base_url,
+                effort=spec.effort,
+                max_output_tokens=spec.max_output_tokens,
             )
+            return AnthropicAdapter(config.model_copy(update=idle))
         case "openai_compat":
-            return OpenAICompatAdapter(
-                OpenAICompatConfig(
-                    model=spec.model,
-                    base_url=spec.base_url or DEFAULT_BASE_URL,
-                    api_key=spec.api_key,
-                    max_output_tokens=spec.max_output_tokens,
-                )
+            config = OpenAICompatConfig(
+                model=spec.model,
+                base_url=spec.base_url or DEFAULT_BASE_URL,
+                api_key=spec.api_key,
+                max_output_tokens=spec.max_output_tokens,
             )
+            return OpenAICompatAdapter(config.model_copy(update=idle))

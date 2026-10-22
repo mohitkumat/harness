@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     max_tokens: int | None = Field(default=None, gt=0)
     max_cost_usd: float | None = Field(default=5.0, gt=0)
     timeout_s: float | None = Field(default=1800.0, gt=0)
+    model_idle_timeout_s: float | None = Field(
+        default=None,
+        gt=0,
+        description="Max silence on a model stream before the call fails and is retried.",
+    )
+    max_model_retries: int = Field(default=2, ge=0)
 
     log_dir: Path = Path.home() / ".harness" / "sessions"
 

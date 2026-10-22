@@ -42,6 +42,7 @@ def build_adapter(settings: Settings, model: str | None = None) -> ModelAdapter:
             anthropic_api_key=settings.anthropic_api_key,
             effort=settings.effort,
             max_output_tokens=settings.max_output_tokens,
+            idle_timeout_s=settings.model_idle_timeout_s,
         )
     )
 
@@ -53,6 +54,7 @@ def limits_from(settings: Settings, *, max_steps: int | None = None) -> Limits:
         max_tokens=settings.max_tokens,
         max_cost_usd=settings.max_cost_usd,
         max_wall_clock_s=settings.timeout_s,
+        max_model_retries=settings.max_model_retries,
     )
 
 

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 
 from harness.core.adapter import ModelAdapter
 from harness.core.approvals import ApprovalGate
-from harness.core.errors import HarnessError, LimitExceeded
+from harness.core.errors import HarnessError, LimitExceeded, ModelError
 from harness.core.events import DoneReason, EventBus
 from harness.core.hooks import ApprovalPolicy, ContextBuilder, PassthroughContext, ToolExecutor
 from harness.core.streaming import collect_stream
@@ -40,13 +40,17 @@ class Limits:
 
     ``max_tokens`` counts input + output tokens across all model calls in the run. ``max_cost_usd``
     is only enforced when the adapter reports cost. ``max_wall_clock_s`` includes time spent
-    waiting for approvals.
+    waiting for approvals. A model call that fails with a retryable ``ModelError`` (429, 5xx,
+    timeouts, a stalled stream) is retried up to ``max_model_retries`` times, waiting
+    ``model_retry_backoff_s * 2**attempt`` (capped at 30 s) before each retry.
     """
 
     max_steps: int = 25
     max_tokens: int | None = None
     max_cost_usd: float | None = None
     max_wall_clock_s: float | None = None
+    max_model_retries: int = 2
+    model_retry_backoff_s: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -169,6 +173,25 @@ class AgentLoop:
             raise LimitExceeded("cost", limit_value=max_cost, actual=cost)
 
     async def _call_model(self, request: ModelRequest, step: int) -> ModelResponse:
+        """Call the model, retrying retryable failures. Each retry emits a non-fatal error event.
+
+        A retry after a mid-stream failure starts the reply over, so clients may already have
+        shown some of the abandoned reply's text.
+        """
+        retries = self.limits.max_model_retries
+        for attempt in range(retries + 1):
+            try:
+                return await self._call_model_once(request, step)
+            except ModelError as e:
+                if not e.retryable or attempt == retries:
+                    raise
+                await self.events.error(
+                    e.code, f"{e.message}; retrying ({attempt + 1}/{retries})", retryable=True
+                )
+                await asyncio.sleep(min(self.limits.model_retry_backoff_s * 2**attempt, 30.0))
+        raise AssertionError("unreachable")  # the last attempt returns or raises
+
+    async def _call_model_once(self, request: ModelRequest, step: int) -> ModelResponse:
         if self.adapter.capabilities.streaming:
 
             async def on_text(text: str) -> None:

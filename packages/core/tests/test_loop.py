@@ -178,7 +178,13 @@ async def test_model_error_is_reported_and_ends_run() -> None:
     adapter = Failing([], streaming=False)
     bus = EventBus("ses_test")
     rec = Recorder(bus)
-    loop = AgentLoop(adapter=adapter, tools=EchoTools(), policy=RiskyAsks(), events=bus)
+    loop = AgentLoop(
+        adapter=adapter,
+        tools=EchoTools(),
+        policy=RiskyAsks(),
+        events=bus,
+        limits=Limits(max_model_retries=0),
+    )
 
     result = await loop.run([Message.user("hi")])
 
@@ -263,3 +269,103 @@ async def test_policy_deny_never_asks() -> None:
     assert tools.calls == []
     assert rec.of(ApprovalRequest) == []
     assert "read-only session" in rec.of(ToolEnd)[0].output
+
+
+# ----------------------------------------------------------------------------- model retries (#6)
+
+
+class Flaky(ScriptedAdapter):
+    """Fails with ``errors`` (in order) before serving the scripted replies."""
+
+    def __init__(self, errors: list[ModelError], replies: list[Reply]) -> None:
+        super().__init__(replies, streaming=False)
+        self.errors = list(errors)
+        self.attempts = 0
+
+    async def complete(self, request: ModelRequest) -> ModelResponse:
+        self.attempts += 1
+        if self.errors:
+            raise self.errors.pop(0)
+        return await super().complete(request)
+
+
+def flaky_loop(
+    errors: list[ModelError], replies: list[Reply], **limits: int | float
+) -> tuple[AgentLoop, Flaky, Recorder]:
+    adapter = Flaky(errors, replies)
+    bus = EventBus("ses_test")
+    loop = AgentLoop(
+        adapter=adapter,
+        tools=EchoTools(),
+        policy=RiskyAsks(),
+        events=bus,
+        limits=Limits(**{"model_retry_backoff_s": 0, **limits}),  # pyright: ignore[reportArgumentType]
+    )
+    return loop, adapter, Recorder(bus)
+
+
+STALL = ModelError("connection error: Request timed out.", retryable=True)
+
+
+async def test_stalled_call_is_retried_then_succeeds() -> None:
+    loop, adapter, rec = flaky_loop([STALL], [Reply("hello")])
+
+    result = await loop.run([Message.user("hi")])
+
+    assert result.reason == "completed"
+    assert result.final_text is not None
+    assert result.final_text.strip() == "hello"
+    assert adapter.attempts == 2
+    assert result.steps == 1  # a retry is not a new step
+    (err,) = rec.of(Error)
+    assert not err.fatal
+    assert err.retryable
+    assert "retrying (1/2)" in err.message
+
+
+async def test_retries_exhausted_ends_with_error() -> None:
+    loop, adapter, rec = flaky_loop([STALL, STALL, STALL], [Reply("never")], max_model_retries=2)
+
+    result = await loop.run([Message.user("hi")])
+
+    assert result.reason == "error"
+    assert result.error is STALL
+    assert adapter.attempts == 3
+    assert [e.fatal for e in rec.of(Error)] == [False, False, True]
+
+
+async def test_non_retryable_error_is_not_retried() -> None:
+    bad = ModelError("HTTP 400: bad request", status_code=400)
+    loop, adapter, rec = flaky_loop([bad], [Reply("never")])
+
+    result = await loop.run([Message.user("hi")])
+
+    assert result.reason == "error"
+    assert adapter.attempts == 1
+    (err,) = rec.of(Error)
+    assert err.fatal
+
+
+async def test_retry_backoff_grows() -> None:
+    loop, _, _ = flaky_loop([STALL, STALL], [Reply("ok")], model_retry_backoff_s=0.05)
+    started = asyncio.get_running_loop().time()
+
+    result = await loop.run([Message.user("hi")])
+
+    assert result.reason == "completed"
+    assert asyncio.get_running_loop().time() - started >= 0.05 + 0.1
+
+
+async def test_hung_call_is_bounded_by_wall_clock() -> None:
+    """Retries never outlive the run's own deadline."""
+    loop, _, _ = flaky_loop(
+        [STALL] * 5,
+        [Reply("never")],
+        max_model_retries=5,
+        model_retry_backoff_s=10,
+        max_wall_clock_s=0.2,
+    )
+
+    result = await loop.run([Message.user("hi")])
+
+    assert result.reason == "timeout"

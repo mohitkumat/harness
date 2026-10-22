@@ -24,6 +24,11 @@ Effort = Literal["low", "medium", "high", "xhigh", "max"]
 
 _FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
+DEFAULT_IDLE_TIMEOUT_S = 90.0
+"""Three missed keep-alives: the API sends a ``ping`` every 30 s while the model thinks silently
+(measured 2026-10-22, see docs/providers/anthropic.md). The SDK hides pings from code, but they
+reset the HTTP read timeout."""
+
 
 class AnthropicConfig(BaseModel):
     """Adapter settings. ``api_key=None`` lets the SDK resolve credentials (env, ``ant`` profile)."""
@@ -43,6 +48,11 @@ class AnthropicConfig(BaseModel):
         description="Opt into server-side fallbacks ('default' routing) when a classifier declines.",
     )
     timeout_s: float = Field(default=600.0, gt=0)
+    idle_timeout_s: float = Field(
+        default=DEFAULT_IDLE_TIMEOUT_S,
+        gt=0,
+        description="Max silence between received bytes (HTTP read timeout). Catches stalled calls.",
+    )
     max_retries: int = Field(default=2, ge=0)
 
 
@@ -64,7 +74,7 @@ class AnthropicAdapter:
         self._client = anthropic.AsyncAnthropic(
             api_key=self.config.api_key.get_secret_value() if self.config.api_key else None,
             base_url=self.config.base_url,
-            timeout=self.config.timeout_s,
+            timeout=anthropic.Timeout(self.config.timeout_s, read=self.config.idle_timeout_s),
             max_retries=self.config.max_retries,
             http_client=http_client,
         )

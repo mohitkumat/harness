@@ -50,6 +50,7 @@ tool-call parsing is the Phase 2 prompt-based fallback.
 | `parallel_tool_calls` / `vision` | `false` / `false` | Declared capabilities |
 | `input_per_mtok` / `output_per_mtok` | 0 / 0 | USD per million tokens; 0 means `cost_usd=0.0` |
 | `max_retries` / `timeout_s` | 2 / 600 | SDK retries 408/409/429/5xx and connection errors |
+| `idle_timeout_s` | 120 | HTTP read timeout. Local servers send nothing during prompt processing (`HARNESS_MODEL_IDLE_TIMEOUT_S`) |
 
 The CLI sets `provider`, `model`, `base_url`, `api_key` and `max_output_tokens`. The other fields
 keep their defaults until per-model config arrives in Phase 2.
