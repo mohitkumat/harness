@@ -16,6 +16,7 @@ from harness.core import (
     ToolCall,
     Usage,
 )
+from harness.core.loop import EMPTY_REPLY_NUDGE
 from harness.core.protocol import AnyEvent, ApprovalRequest, Done, Error, TextDelta, ToolEnd
 from harness.core.testing import EchoTools, Reply, RiskyAsks, ScriptedAdapter
 
@@ -263,3 +264,89 @@ async def test_policy_deny_never_asks() -> None:
     assert tools.calls == []
     assert rec.of(ApprovalRequest) == []
     assert "read-only session" in rec.of(ToolEnd)[0].output
+
+
+# ----------------------------------------------------------------------------- empty replies (#7)
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+async def test_empty_reply_is_nudged_then_recovers(streaming: bool) -> None:
+    loop, adapter, tools, rec = make_loop(
+        [Reply(), Reply(calls=[("echo", {"text": "a"})]), Reply("all done")], streaming=streaming
+    )
+    history = [Message.user("go")]
+
+    result = await loop.run(history)
+
+    assert result.reason == "completed"
+    assert result.final_text is not None
+    assert result.final_text.strip() == "all done"
+    assert result.steps == 3
+    assert [c.arguments for c in tools.calls] == [{"text": "a"}]
+    # The empty reply stays in history, followed by the nudge the model saw on its next call.
+    assert [m.role for m in history] == [
+        "user",
+        "assistant",
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
+    ]
+    assert history[2] == Message.user(EMPTY_REPLY_NUDGE)
+    assert adapter.requests[1].messages[-1] == Message.user(EMPTY_REPLY_NUDGE)
+    (err,) = rec.of(Error)
+    assert err.code == "model_error"
+    assert err.retryable
+    assert not err.fatal
+    assert "(1/2)" in err.message
+
+
+async def test_whitespace_only_reply_counts_as_empty() -> None:
+    loop, _, _, _ = make_loop([Reply(text="   "), Reply("ok")])
+
+    result = await loop.run([Message.user("go")])
+
+    assert result.reason == "completed"
+    assert result.steps == 2
+
+
+async def test_empty_reply_counter_resets_after_progress() -> None:
+    loop, _, _, rec = make_loop(
+        [Reply(), Reply(calls=[("echo", {"text": "a"})]), Reply(), Reply(), Reply("done")],
+        limits=Limits(max_empty_replies=2),
+    )
+
+    result = await loop.run([Message.user("go")])
+
+    assert result.reason == "completed"
+    assert [e.message[-5:] for e in rec.of(Error)] == ["(1/2)", "(1/2)", "(2/2)"]
+
+
+async def test_repeated_empty_replies_end_with_error() -> None:
+    loop, adapter, _, rec = make_loop(
+        [Reply(), Reply(), Reply()], limits=Limits(max_empty_replies=2)
+    )
+    history = [Message.user("go")]
+
+    result = await loop.run(history)
+
+    assert result.reason == "error"
+    assert isinstance(result.error, ModelError)
+    assert "3 times" in result.error.message
+    assert result.final_text is None
+    assert len(adapter.requests) == 3
+    *nudges, fatal = rec.of(Error)
+    assert [e.fatal for e in nudges] == [False, False]
+    assert fatal.fatal
+    assert rec.done.reason == "error"
+
+
+async def test_empty_reply_with_no_retries_fails_immediately() -> None:
+    loop, adapter, _, rec = make_loop([Reply()], limits=Limits(max_empty_replies=0))
+
+    result = await loop.run([Message.user("go")])
+
+    assert result.reason == "error"
+    assert len(adapter.requests) == 1
+    (err,) = rec.of(Error)
+    assert err.fatal

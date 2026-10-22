@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 
 from harness.core.adapter import ModelAdapter
 from harness.core.approvals import ApprovalGate
-from harness.core.errors import HarnessError, LimitExceeded
+from harness.core.errors import HarnessError, LimitExceeded, ModelError
 from harness.core.events import DoneReason, EventBus
 from harness.core.hooks import ApprovalPolicy, ContextBuilder, PassthroughContext, ToolExecutor
 from harness.core.streaming import collect_stream
@@ -33,6 +33,12 @@ _LIMIT_REASONS: dict[str, DoneReason] = {
     "wall_clock": "timeout",
 }
 
+EMPTY_REPLY_NUDGE = (
+    "Your last reply was empty: no text and no tool calls. Continue the task with a tool call, "
+    "or give your final answer."
+)
+"""Sent as a user message when the model returns nothing, so weak models get another try."""
+
 
 @dataclass(frozen=True)
 class Limits:
@@ -40,13 +46,15 @@ class Limits:
 
     ``max_tokens`` counts input + output tokens across all model calls in the run. ``max_cost_usd``
     is only enforced when the adapter reports cost. ``max_wall_clock_s`` includes time spent
-    waiting for approvals.
+    waiting for approvals. ``max_empty_replies`` is how many consecutive empty replies (no text,
+    no tool calls) are answered with a nudge before the run ends with an error.
     """
 
     max_steps: int = 25
     max_tokens: int | None = None
     max_cost_usd: float | None = None
     max_wall_clock_s: float | None = None
+    max_empty_replies: int = 2
 
 
 @dataclass(frozen=True)
@@ -136,6 +144,7 @@ class AgentLoop:
 
     async def _steps(self, history: list[Message], state: _RunState) -> DoneReason:
         tools = self.tools.tools
+        empty_replies = 0
         for step in range(self.limits.max_steps):
             self._check_budget(state.usage)
             state.steps = step + 1
@@ -146,6 +155,11 @@ class AgentLoop:
             history.append(response.message)
 
             calls = response.message.tool_calls
+            if not calls and not response.message.text.strip():
+                empty_replies += 1
+                await self._on_empty_reply(history, empty_replies)
+                continue
+            empty_replies = 0
             if not calls:
                 state.final_text = response.message.text
                 return "completed"
@@ -159,6 +173,18 @@ class AgentLoop:
         raise LimitExceeded(
             "steps", limit_value=self.limits.max_steps, actual=self.limits.max_steps
         )
+
+    async def _on_empty_reply(self, history: list[Message], count: int) -> None:
+        """Nudge the model after an empty reply, or end the run once the retries are used up."""
+        limit = self.limits.max_empty_replies
+        if count > limit:
+            raise ModelError(f"model returned an empty reply {count} times in a row")
+        await self.events.error(
+            ModelError.code,
+            f"model returned an empty reply; asking it to continue ({count}/{limit})",
+            retryable=True,
+        )
+        history.append(Message.user(EMPTY_REPLY_NUDGE))
 
     def _check_budget(self, usage: Usage) -> None:
         tokens = usage.input_tokens + usage.output_tokens
