@@ -103,7 +103,7 @@ If you change `protocol/`, run `just gen` and commit the generated files.
 
 ## 5. Current phase
 
-> **Current phase: 1 — MVP loop + CLI.** (Phase 0 exit criteria met 2026-09-30.) Update this line when a phase's exit criteria are met.
+> **Current phase: 2 — Multi-model.** (Phase 0 exit criteria met 2026-09-30; Phase 1 met 2026-10-22: 13/15 evals on claude-opus-5-5.) Update this line when a phase's exit criteria are met.
 
 Do not build features from later phases early. If a later-phase need appears, leave a
 `# TODO(phase-N):` comment and open an issue instead.
