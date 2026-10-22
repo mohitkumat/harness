@@ -24,6 +24,10 @@ just eval --agent harness                        # fast subset, real agent
 uv run harness-eval --agent harness              # full suite
 uv run harness-eval --agent harness --allow-host-shell --model claude-sonnet-5-5
 uv run harness-eval --help
+
+# Free local model via Ollama (docs/providers/openai_compat.md)
+HARNESS_PROVIDER=openai_compat HARNESS_MODEL=qwen2.5:7b HARNESS_MAX_OUTPUT_TOKENS=8192 \
+  uv run harness-eval --agent harness
 ```
 
 Each run writes a JSON report to `evals/results/`. With the `harness` agent it also writes the

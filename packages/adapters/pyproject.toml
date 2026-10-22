@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "anthropic>=1.11.0",
     "harness-core",
+    "openai>=3.35.1",  # Chat Completions SDK for OpenAI-compatible servers (Ollama, vLLM); httpx2-based, so cassettes work
 ]
 
 [tool.uv.sources]

@@ -1,0 +1,26 @@
+[
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.",
+          "role": "system"
+        },
+        {
+          "content": "hi",
+          "role": "user"
+        }
+      ],
+      "model": "harness-contract-no-such-model",
+      "stream": false
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "{\"error\":{\"message\":\"model 'harness-contract-no-such-model' not found\",\"type\":\"not_found_error\",\"param\":null,\"code\":null}}\n",
+    "status": 404
+  }
+]

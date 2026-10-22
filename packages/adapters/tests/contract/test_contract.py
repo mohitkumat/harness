@@ -119,7 +119,7 @@ async def test_usage_reporting(make: Make) -> None:
     assert response.usage.input_tokens > 0
     assert response.usage.output_tokens > 0
     assert response.usage.cost_usd is not None
-    assert response.usage.cost_usd > 0
+    assert response.usage.cost_usd >= 0  # free (local) models report a real cost of 0
     assert response.model
 
 

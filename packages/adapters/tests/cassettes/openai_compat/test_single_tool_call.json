@@ -1,0 +1,48 @@
+[
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.",
+          "role": "system"
+        },
+        {
+          "content": "What's the weather in Paris? Use the tool.",
+          "role": "user"
+        }
+      ],
+      "model": "qwen2.5:7b",
+      "stream": false,
+      "tools": [
+        {
+          "function": {
+            "description": "Get the current weather for one city.",
+            "name": "get_weather",
+            "parameters": {
+              "additionalProperties": false,
+              "properties": {
+                "city": {
+                  "description": "City name, e.g. Paris",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        }
+      ]
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "{\"id\":\"chatcmpl-548\",\"object\":\"chat.completion\",\"created\":1792594258,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"id\":\"call_zf41cpcz\",\"index\":0,\"type\":\"function\",\"function\":{\"name\":\"get_weather\",\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":162,\"prompt_tokens_details\":{\"cached_tokens\":13},\"completion_tokens\":20,\"total_tokens\":182}}\n",
+    "status": 200
+  }
+]
