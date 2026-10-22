@@ -41,6 +41,21 @@ class SlowAgent:
         return AgentOutcome(final_answer="done")
 
 
+class CancelSwallowingAgent:
+    """Like the real harness agent: catches the cancel and returns a "cancelled" outcome."""
+
+    name = "swallow"
+
+    async def run(self, prompt: str, workspace: Path, *, max_steps: int) -> AgentOutcome:
+        try:
+            await asyncio.sleep(5)
+        except asyncio.CancelledError:
+            if (task := asyncio.current_task()) is not None:
+                task.uncancel()
+            return AgentOutcome(final_answer="partial", steps=3, error="run ended with cancelled")
+        return AgentOutcome(final_answer="done")
+
+
 class CrashingAgent:
     name = "crash"
 
@@ -62,15 +77,41 @@ async def test_null_agent_fails() -> None:
 
 
 @pytest.mark.parametrize(
-    ("agent", "fragment"), [(SlowAgent(), "timed out"), (CrashingAgent(), "kaboom")]
+    ("agent", "fragment"),
+    [
+        (SlowAgent(), "timed out"),
+        (CancelSwallowingAgent(), "timed out"),
+        (CrashingAgent(), "kaboom"),
+    ],
 )
 async def test_agent_failures_fail_task_not_suite(
-    agent: SlowAgent | CrashingAgent, fragment: str
+    agent: SlowAgent | CancelSwallowingAgent | CrashingAgent, fragment: str
 ) -> None:
     result = await run_task(agent, TASK)
     assert not result.passed
     assert result.error is not None
     assert fragment in result.error
+
+
+async def test_timeout_is_reported_even_if_agent_swallows_cancel() -> None:
+    """Regression for #5: the timeout used to be reported as the agent's "cancelled"."""
+    result = await run_task(CancelSwallowingAgent(), TASK)
+
+    assert result.error == "timed out after 0.5s"
+    assert result.steps == 3  # what the agent did before the deadline is kept
+    assert not result.passed
+
+
+async def test_agent_error_before_deadline_is_kept() -> None:
+    class FailingFast:
+        name = "fail-fast"
+
+        async def run(self, prompt: str, workspace: Path, *, max_steps: int) -> AgentOutcome:
+            return AgentOutcome(final_answer=None, error="run ended with max_steps")
+
+    result = await run_task(FailingFast(), TASK)
+
+    assert result.error == "run ended with max_steps"
 
 
 def test_cli_writes_report(tmp_path: Path) -> None:
