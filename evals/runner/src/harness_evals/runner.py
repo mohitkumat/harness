@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import tempfile
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -72,14 +72,19 @@ async def run_task(agent: AgentUnderTest, task: Task) -> TaskResult:
         workspace = Path(tmp)
         _seed(workspace, task)
         start = time.monotonic()
+        timed_out = f"timed out after {task.timeout_s}s"
+        deadline = asyncio.timeout(task.timeout_s)
         try:
-            outcome = await asyncio.wait_for(
-                agent.run(task.prompt, workspace, max_steps=task.max_steps), task.timeout_s
-            )
+            async with deadline:
+                outcome = await agent.run(task.prompt, workspace, max_steps=task.max_steps)
         except TimeoutError:
-            outcome = AgentOutcome(final_answer=None, error=f"timed out after {task.timeout_s}s")
+            outcome = AgentOutcome(final_answer=None, error=timed_out)
         except Exception as e:  # an agent crash fails the task, it must not abort the suite
             outcome = AgentOutcome(final_answer=None, error=f"{type(e).__name__}: {e}")
+        if deadline.expired() and outcome.error != timed_out:
+            # The agent loop handles cancellation itself and returns normally ("cancelled"), so
+            # no TimeoutError reaches us. Report the timeout, keeping steps and usage.
+            outcome = replace(outcome, final_answer=None, error=timed_out)
         duration = time.monotonic() - start
         checks = [run_check(c, task, workspace, outcome.final_answer) for c in task.checks]
 
