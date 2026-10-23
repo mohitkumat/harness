@@ -7,6 +7,7 @@ handler error) comes back as an ``is_error`` result for the model; nothing is ra
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -86,6 +87,9 @@ class ToolRegistry:
             known = ", ".join(self._specs) or "none"
             return _error(call, f"Unknown tool {call.name!r}. Available tools: {known}.")
 
+        if call.raw_arguments is not None:
+            return _error(call, _not_json(call.name, call.raw_arguments))
+
         validator = self._validators[call.name]
         errors: list[ValidationError] = list(
             validator.iter_errors(call.arguments)  # pyright: ignore[reportUnknownMemberType]  (stubs are untyped here)
@@ -109,6 +113,18 @@ class ToolRegistry:
 
         content, truncated = truncate(output, self.max_output_chars)
         return ToolOutcome(ToolResult(tool_call_id=call.id, content=content), truncated=truncated)
+
+
+def _not_json(name: str, raw: str) -> str:
+    try:
+        json.loads(raw)
+        problem = "is not a JSON object"
+    except json.JSONDecodeError as e:
+        problem = f"is not valid JSON ({e})"
+    return (
+        f"The arguments for {name!r} {problem}. Send one JSON object that matches the tool's "
+        "schema. JSON strings use double quotes; escape quotes and newlines inside them."
+    )
 
 
 def _error(call: ToolCall, message: str) -> ToolOutcome:

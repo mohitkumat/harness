@@ -1,0 +1,26 @@
+[
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.\n\n# Tools\n\nYou can call these tools. Arguments must match each tool's JSON schema.\n\n<tools>\n{\"name\": \"get_weather\", \"description\": \"Get the current weather for one city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\", \"description\": \"City name, e.g. Paris\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}\n</tools>\n\nTo call a tool, reply with one block per call, in exactly this format:\n<tool_call>\n{\"name\": \"<tool name>\", \"arguments\": {<arguments as a JSON object>}}\n</tool_call>\n\nYou may make several calls in one reply. After your calls, stop and wait: each result comes back to you in a <tool_result> block. Never write a <tool_result> block yourself. When you need no more tools, reply with your final answer in plain text, without any <tool_call> block.",
+          "role": "system"
+        },
+        {
+          "content": "Get the weather for Paris and for Tokyo. Call the tool for both cities at once, in a single response.",
+          "role": "user"
+        }
+      ],
+      "model": "qwen2.5:7b",
+      "stream": false
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "{\"id\":\"chatcmpl-448\",\"object\":\"chat.completion\",\"created\":1792756792,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\\u003ctool_call\\u003e\\n{\\\"name\\\": \\\"get_weather\\\", \\\"arguments\\\": {\\\"city\\\": \\\"Paris\\\"}}\\n\\u003ctool_call\\u003e\\n{\\\"name\\\": \\\"get_weather\\\", \\\"arguments\\\": {\\\"city\\\": \\\"Tokyo\\\"}}\\n\\u003c/tool_call\\u003e\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":239,\"prompt_tokens_details\":{\"cached_tokens\":211},\"completion_tokens\":39,\"total_tokens\":278}}\n",
+    "status": 200
+  }
+]

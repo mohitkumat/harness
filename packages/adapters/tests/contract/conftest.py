@@ -7,7 +7,8 @@ against its recorded cassette ``tests/cassettes/<adapter>/<test>.json``.
 - Record: ``just record TEST=packages/adapters/tests/contract`` (sets ``HARNESS_RECORD=1``, needs
   real credentials, e.g. ``ANTHROPIC_API_KEY`` in ``.env``). ``openai_compat`` records against a
   local server: ``HARNESS_CONTRACT_OPENAI_BASE_URL`` (default Ollama) and
-  ``HARNESS_CONTRACT_OPENAI_MODEL`` (default ``qwen2.5:7b``).
+  ``HARNESS_CONTRACT_OPENAI_MODEL`` (default ``qwen2.5:7b``). ``prompt_tools`` is the prompt-based
+fallback (ADR 0006) over that same local model.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ import pytest
 
 from harness.adapters.anthropic import AnthropicAdapter, AnthropicConfig
 from harness.adapters.openai_compat import DEFAULT_BASE_URL, OpenAICompatAdapter, OpenAICompatConfig
+from harness.adapters.prompt_tools import PromptToolsAdapter
 from harness.adapters.testing import CassetteTransport
 from harness.core import ModelAdapter
 
@@ -53,7 +55,21 @@ def _openai_compat(transport: CassetteTransport, model: str | None) -> ModelAdap
     )
 
 
-FACTORIES: dict[str, AdapterFactory] = {"anthropic": _anthropic, "openai_compat": _openai_compat}
+def _prompt_tools(transport: CassetteTransport, model: str | None) -> ModelAdapter:
+    """The prompt-based fallback over the local model, with its native tools switched off."""
+    inner = _openai_compat(transport, model)
+    assert isinstance(inner, OpenAICompatAdapter)
+    config = inner.config.model_copy(update={"native_tools": False})
+    return PromptToolsAdapter(
+        OpenAICompatAdapter(config, http_client=openai.DefaultAsyncHttpxClient(transport=transport))
+    )
+
+
+FACTORIES: dict[str, AdapterFactory] = {
+    "anthropic": _anthropic,
+    "openai_compat": _openai_compat,
+    "prompt_tools": _prompt_tools,
+}
 
 # TODO(phase-2): register the gemini factory.
 

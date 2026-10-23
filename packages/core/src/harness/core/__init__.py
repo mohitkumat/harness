@@ -34,6 +34,7 @@ from harness.core.loop import AgentLoop, Limits, RunResult
 from harness.core.session import Harness, LoopFactory, Session
 from harness.core.streaming import collect_stream
 from harness.core.types import (
+    RAW_ARGUMENTS_KEY,
     ContentPart,
     ImagePart,
     Message,
@@ -51,6 +52,7 @@ from harness.core.types import (
 )
 
 __all__ = [
+    "RAW_ARGUMENTS_KEY",
     "AgentLoop",
     "ApprovalAnswer",
     "ApprovalGate",

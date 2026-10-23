@@ -1,0 +1,26 @@
+[
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.",
+          "role": "system"
+        },
+        {
+          "content": "Reply with exactly the word: pong",
+          "role": "user"
+        }
+      ],
+      "model": "qwen2.5:7b",
+      "stream": false
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "{\"id\":\"chatcmpl-91\",\"object\":\"chat.completion\",\"created\":1792756767,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"pong\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":31,\"prompt_tokens_details\":{\"cached_tokens\":19},\"completion_tokens\":2,\"total_tokens\":33}}\n",
+    "status": 200
+  }
+]
