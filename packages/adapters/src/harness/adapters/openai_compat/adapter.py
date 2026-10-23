@@ -23,6 +23,9 @@ from harness.core import (
 DEFAULT_BASE_URL = "http://localhost:11434/v1"
 """Ollama's OpenAI-compatible endpoint."""
 
+DEFAULT_IDLE_TIMEOUT_S = 120.0
+"""Local servers send nothing while they process a long prompt, so allow for slow prefill."""
+
 _PLACEHOLDER_KEY = "not-needed"  # local servers ignore the key, but the SDK requires one
 
 
@@ -39,6 +42,11 @@ class OpenAICompatConfig(BaseModel):
     api_key: SecretStr | None = None
     max_output_tokens: int = Field(default=8_192, gt=0)
     timeout_s: float = Field(default=600.0, gt=0)
+    idle_timeout_s: float = Field(
+        default=DEFAULT_IDLE_TIMEOUT_S,
+        gt=0,
+        description="Max silence between received bytes (HTTP read timeout). Catches stalled calls.",
+    )
     max_retries: int = Field(default=2, ge=0)
 
     context_window: int = Field(default=32_768, gt=0)
@@ -68,7 +76,7 @@ class OpenAICompatAdapter:
         self._client = openai.AsyncOpenAI(
             api_key=config.api_key.get_secret_value() if config.api_key else _PLACEHOLDER_KEY,
             base_url=config.base_url,
-            timeout=config.timeout_s,
+            timeout=openai.Timeout(config.timeout_s, read=config.idle_timeout_s),
             max_retries=config.max_retries,
             http_client=http_client,
         )

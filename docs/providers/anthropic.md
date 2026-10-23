@@ -17,6 +17,7 @@ The CLI and `just record` read it from there. Never commit keys.
 | `effort` | `high` | `output_config.effort`. Claude Opus 5.5's own default is `medium`. Not sent to Haiku 4.5 |
 | `refusal_fallback` | `true` | `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`): a classifier decline is re-run server-side on Anthropic's recommended model |
 | `max_retries` / `timeout_s` | 2 / 600 | SDK retries 408/409/429/5xx and connection errors |
+| `idle_timeout_s` | 90 | HTTP read timeout: the longest silence allowed on the stream (`HARNESS_MODEL_IDLE_TIMEOUT_S`) |
 
 ## Behaviour
 
@@ -31,6 +32,13 @@ The CLI and `just record` read it from there. Never commit keys.
 - **Tool choice:** `required` maps to `any`, which Claude Opus 5.5 / Sonnet 5.5 / Fable 5.1 reject
   with a 400. The loop only uses `auto`.
 - **Sampling:** `temperature` is passed only when set. Current models reject it.
+- **Stalls:** with thinking display omitted (the default), a long think sends no content events,
+  only a `ping` **every 30 s**. This was measured on 2026-10-22 with `claude-opus-5-5` at effort
+  `max`: 149 s of thinking with no SDK-visible events, but the largest gap between raw bytes was
+  exactly 30.0 s. The Python SDK drops `ping` events, but they still reset the HTTP read timeout.
+  `idle_timeout_s=90` therefore allows three missed pings. A stalled call fails with a retryable
+  `ModelError` after about 90 s, instead of 600 s, and the agent loop retries it
+  (`Limits.max_model_retries`).
 - **Errors:** SDK errors become `ModelError(provider="anthropic", status_code=…)`. Timeouts,
   connection errors, 408/409/429 and 5xx are `retryable`.
 - **Cost:** computed from list prices, summed per usage iteration so a fallback bills each model.
