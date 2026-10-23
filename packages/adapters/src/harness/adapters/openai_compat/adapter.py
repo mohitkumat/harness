@@ -50,6 +50,10 @@ class OpenAICompatConfig(BaseModel):
     max_retries: int = Field(default=2, ge=0)
 
     context_window: int = Field(default=32_768, gt=0)
+    native_tools: bool = Field(
+        default=True,
+        description="False if the model can't do native tool calls; apps then wrap it in the prompt fallback.",
+    )
     parallel_tool_calls: bool = False
     vision: bool = False
     input_per_mtok: float = Field(default=0.0, ge=0)
@@ -83,7 +87,7 @@ class OpenAICompatAdapter:
         self._capabilities = ModelCapabilities(
             context_window=config.context_window,
             max_output_tokens=config.max_output_tokens,
-            native_tools=True,
+            native_tools=config.native_tools,
             parallel_tool_calls=config.parallel_tool_calls,
             vision=config.vision,
             streaming=True,

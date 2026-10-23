@@ -34,6 +34,10 @@ class Settings(BaseSettings):
         default=None, description="Model endpoint, e.g. http://localhost:11434/v1 for Ollama."
     )
     effort: Effort | None = "high"
+    native_tools: bool = Field(
+        default=True,
+        description="Set False for models without native tool calls (e.g. qwen2.5-coder on Ollama).",
+    )
     max_output_tokens: int = Field(default=64_000, gt=0)
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
 

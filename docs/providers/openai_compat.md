@@ -34,9 +34,13 @@ uv run harness-eval --agent harness
 Models with reliable native tool calling in Ollama at 7–8B: `qwen2.5:7b`, `llama3.1:8b`. Expect a
 much lower eval pass rate than Claude.
 
-**Avoid `qwen2.5-coder`.** Under Ollama it writes tool calls as JSON in the reply text
-(`finish_reason: stop`) instead of native `tool_calls`. The harness then sees a plain answer. Text
-tool-call parsing is the Phase 2 prompt-based fallback.
+**Models without native tool calls** (e.g. `qwen2.5-coder` under Ollama, which writes calls as
+JSON in the reply text with `finish_reason: stop`) need the prompt-based fallback
+([ADR 0006](../adr/0006-prompt-based-tool-calling-fallback.md)):
+
+```bash
+HARNESS_NATIVE_TOOLS=false   # tools go in the system prompt; <tool_call> blocks are parsed from text
+```
 
 ## Configuration (`OpenAICompatConfig`)
 
@@ -48,11 +52,12 @@ tool-call parsing is the Phase 2 prompt-based fallback.
 | `max_output_tokens` | 8192 | Sent as `max_tokens` |
 | `context_window` | 32768 | Declared capability. Keep it in line with the server's context length |
 | `parallel_tool_calls` / `vision` | `false` / `false` | Declared capabilities |
+| `native_tools` | `true` | `false` makes `build_adapter` wrap the adapter in the prompt fallback (`HARNESS_NATIVE_TOOLS`) |
 | `input_per_mtok` / `output_per_mtok` | 0 / 0 | USD per million tokens; 0 means `cost_usd=0.0` |
 | `max_retries` / `timeout_s` | 2 / 600 | SDK retries 408/409/429/5xx and connection errors |
 | `idle_timeout_s` | 120 | HTTP read timeout. Local servers send nothing during prompt processing (`HARNESS_MODEL_IDLE_TIMEOUT_S`) |
 
-The CLI sets `provider`, `model`, `base_url`, `api_key` and `max_output_tokens`. The other fields
+The CLI sets `provider`, `model`, `base_url`, `api_key`, `max_output_tokens` and `native_tools`. The other fields
 keep their defaults until per-model config arrives in Phase 2.
 
 ## Behaviour

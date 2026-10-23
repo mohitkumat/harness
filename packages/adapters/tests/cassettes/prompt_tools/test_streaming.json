@@ -1,0 +1,29 @@
+[
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.",
+          "role": "system"
+        },
+        {
+          "content": "Count from 1 to 5, separated by spaces.",
+          "role": "user"
+        }
+      ],
+      "model": "qwen2.5:7b",
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "headers": {
+      "content-type": "text/event-stream"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "data: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"1\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"3\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"4\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"5\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: {\"id\":\"chatcmpl-423\",\"object\":\"chat.completion.chunk\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[],\"usage\":{\"prompt_tokens\":36,\"prompt_tokens_details\":{\"cached_tokens\":35},\"completion_tokens\":10,\"total_tokens\":46}}\n\ndata: [DONE]\n\n",
+    "status": 200
+  }
+]

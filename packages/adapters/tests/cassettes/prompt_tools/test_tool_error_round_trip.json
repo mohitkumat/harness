@@ -1,0 +1,58 @@
+[
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.\n\n# Tools\n\nYou can call these tools. Arguments must match each tool's JSON schema.\n\n<tools>\n{\"name\": \"get_weather\", \"description\": \"Get the current weather for one city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\", \"description\": \"City name, e.g. Paris\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}\n</tools>\n\nTo call a tool, reply with one block per call, in exactly this format:\n<tool_call>\n{\"name\": \"<tool name>\", \"arguments\": {<arguments as a JSON object>}}\n</tool_call>\n\nYou may make several calls in one reply. After your calls, stop and wait: each result comes back to you in a <tool_result> block. Never write a <tool_result> block yourself. When you need no more tools, reply with your final answer in plain text, without any <tool_call> block.",
+          "role": "system"
+        },
+        {
+          "content": "What's the weather in Paris? Use the tool. If it fails, say 'unavailable'.",
+          "role": "user"
+        }
+      ],
+      "model": "qwen2.5:7b",
+      "stream": false
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "{\"id\":\"chatcmpl-96\",\"object\":\"chat.completion\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"name\\\": \\\"get_weather\\\", \\\"arguments\\\": {\\\"city\\\": \\\"Paris\\\"}}\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":236,\"prompt_tokens_details\":{\"cached_tokens\":211},\"completion_tokens\":17,\"total_tokens\":253}}\n",
+    "status": 200
+  },
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.\n\n# Tools\n\nYou can call these tools. Arguments must match each tool's JSON schema.\n\n<tools>\n{\"name\": \"get_weather\", \"description\": \"Get the current weather for one city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\", \"description\": \"City name, e.g. Paris\"}}, \"required\": [\"city\"], \"additionalProperties\": false}}\n</tools>\n\nTo call a tool, reply with one block per call, in exactly this format:\n<tool_call>\n{\"name\": \"<tool name>\", \"arguments\": {<arguments as a JSON object>}}\n</tool_call>\n\nYou may make several calls in one reply. After your calls, stop and wait: each result comes back to you in a <tool_result> block. Never write a <tool_result> block yourself. When you need no more tools, reply with your final answer in plain text, without any <tool_call> block.",
+          "role": "system"
+        },
+        {
+          "content": "What's the weather in Paris? Use the tool. If it fails, say 'unavailable'.",
+          "role": "user"
+        },
+        {
+          "content": "<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Paris\"}}\n</tool_call>",
+          "role": "assistant"
+        },
+        {
+          "content": "<tool_result name=\"get_weather\" error=\"true\">\nweather service is down\n</tool_result>",
+          "role": "user"
+        }
+      ],
+      "model": "qwen2.5:7b",
+      "stream": false
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "{\"id\":\"chatcmpl-695\",\"object\":\"chat.completion\",\"created\":1792756770,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The weather in Paris is currently unavailable.\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":286,\"prompt_tokens_details\":{\"cached_tokens\":236},\"completion_tokens\":9,\"total_tokens\":295}}\n",
+    "status": 200
+  }
+]

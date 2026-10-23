@@ -1,0 +1,26 @@
+[
+  {
+    "body": {
+      "max_tokens": 1000,
+      "messages": [
+        {
+          "content": "You are a terse test assistant. Follow instructions exactly.",
+          "role": "system"
+        },
+        {
+          "content": "Say hi.",
+          "role": "user"
+        }
+      ],
+      "model": "qwen2.5:7b",
+      "stream": false
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "response": "{\"id\":\"chatcmpl-769\",\"object\":\"chat.completion\",\"created\":1792756771,\"model\":\"qwen2.5:7b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Hi.\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":27,\"prompt_tokens_details\":{\"cached_tokens\":19},\"completion_tokens\":3,\"total_tokens\":30}}\n",
+    "status": 200
+  }
+]

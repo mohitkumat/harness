@@ -43,6 +43,7 @@ def build_adapter(settings: Settings, model: str | None = None) -> ModelAdapter:
             effort=settings.effort,
             max_output_tokens=settings.max_output_tokens,
             idle_timeout_s=settings.model_idle_timeout_s,
+            native_tools=settings.native_tools,
         )
     )
 

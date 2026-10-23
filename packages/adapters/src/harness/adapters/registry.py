@@ -15,6 +15,7 @@ from harness.adapters.openai_compat import (
     OpenAICompatAdapter,
     OpenAICompatConfig,
 )
+from harness.adapters.prompt_tools import PromptToolsAdapter
 from harness.core import ModelAdapter
 
 Provider = Literal["anthropic", "openai_compat"]
@@ -38,10 +39,21 @@ class AdapterSpec(BaseModel):
     idle_timeout_s: float | None = Field(
         default=None, gt=0, description="Max silence on a model stream; None = adapter default."
     )
+    native_tools: bool = Field(
+        default=True,
+        description="False forces prompt-based tool calling (ADR 0006), for models without native tools.",
+    )
 
 
 def build_adapter(spec: AdapterSpec) -> ModelAdapter:
-    """Build the adapter for ``spec.provider``."""
+    """Build the adapter for ``spec.provider``, wrapped in the prompt fallback if it has no native tools."""
+    adapter = _build_provider(spec)
+    if not spec.native_tools or not adapter.capabilities.native_tools:
+        return PromptToolsAdapter(adapter)
+    return adapter
+
+
+def _build_provider(spec: AdapterSpec) -> ModelAdapter:
     idle = {"idle_timeout_s": spec.idle_timeout_s} if spec.idle_timeout_s is not None else {}
     match spec.provider:
         case "anthropic":
@@ -59,5 +71,6 @@ def build_adapter(spec: AdapterSpec) -> ModelAdapter:
                 base_url=spec.base_url or DEFAULT_BASE_URL,
                 api_key=spec.api_key,
                 max_output_tokens=spec.max_output_tokens,
+                native_tools=spec.native_tools,
             )
             return OpenAICompatAdapter(config.model_copy(update=idle))
