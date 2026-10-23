@@ -31,6 +31,7 @@ from openai.types.completion_usage import CompletionUsage
 from pydantic import JsonValue
 
 from harness.core import (
+    RAW_ARGUMENTS_KEY,
     ImagePart,
     Message,
     ModelError,
@@ -44,9 +45,6 @@ from harness.core import (
 )
 
 SOURCE = "openai_compat"
-
-RAW_ARGUMENTS_KEY = "_raw"
-"""Key under which unparseable tool-call arguments are passed on (see module docstring)."""
 
 _STOP_REASONS: dict[str, StopReason] = {
     "stop": StopReason.END_TURN,

@@ -54,6 +54,14 @@ class ReasoningPart(_Model):
     text: str = ""
 
 
+RAW_ARGUMENTS_KEY = "_raw"
+"""Arguments the model sent that aren't a JSON object travel as ``{RAW_ARGUMENTS_KEY: <text>}``.
+
+The tool registry rejects them with a JSON error for the model (ADR 0005). No tool may declare
+a parameter with this name.
+"""
+
+
 class ToolCall(_Model):
     """A model's request to invoke a tool. ``arguments`` is always a parsed object, never a JSON string."""
 
@@ -61,6 +69,12 @@ class ToolCall(_Model):
     id: str
     name: str
     arguments: dict[str, JsonValue]
+
+    @property
+    def raw_arguments(self) -> str | None:
+        """The model's original text if its arguments could not be parsed, else ``None``."""
+        raw = self.arguments.get(RAW_ARGUMENTS_KEY)
+        return raw if len(self.arguments) == 1 and isinstance(raw, str) else None
 
 
 class ToolResult(_Model):

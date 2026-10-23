@@ -65,6 +65,16 @@ async def test_read_file_bad_args(registry: ToolRegistry) -> None:
     assert "Invalid arguments" in content
 
 
+async def test_unparseable_args_get_a_json_error(registry: ToolRegistry) -> None:
+    # Regression: a single-quoted string (seen from qwen2.5:7b) used to come back as
+    # "'path' is a required property", so the model resent the same broken JSON.
+    content, is_error = await run(registry, "read_file", _raw="{'path': 'a.txt'}")
+    assert is_error
+    assert "is not valid JSON" in content
+    assert "double quotes" in content
+    assert "required property" not in content
+
+
 async def test_symlink_escape_refused(
     registry: ToolRegistry, ws: Path, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
